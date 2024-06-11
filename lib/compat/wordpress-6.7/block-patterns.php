@@ -11,10 +11,14 @@
  * Register any patterns that the active theme may provide under its
  * `./patterns/` directory.
  *
+ * This function is an override that uses `gutenberg_get_theme()` to get the theme object.
+ * `gutenberg_get_theme()` will return the Gutenberg_Theme object instead of WP_Theme.
+ *
  * @since 6.0.0
  * @since 6.1.0 The `postTypes` property was added.
  * @since 6.2.0 The `templateTypes` property was added.
  * @since 6.4.0 Uses the `WP_Theme::get_block_patterns` method.
+ * @since 6.7.0 Add the `synced` property to the block pattern registry.
  * @access private
  */
 function register_theme_block_patterns() {
