@@ -141,6 +141,16 @@ require __DIR__ . '/compat/wordpress-6.6/block-template-utils.php';
 require __DIR__ . '/compat/wordpress-6.6/option.php';
 require __DIR__ . '/compat/wordpress-6.6/post.php';
 
+// WordPress 6.7 compat.
+if ( class_exists( 'WP_Theme' ) ) {
+	require __DIR__ . '/compat/wordpress-6.7/class-gutenberg-theme.php';
+	require __DIR__ . '/compat/wordpress-6.7/theme.php';
+
+	if ( class_exists( 'WP_Block_Patterns_Registry' ) ) {
+		require __DIR__ . '/compat/wordpress-6.7/block-patterns.php';
+	}
+}
+
 // Experimental features.
 require __DIR__ . '/experimental/block-editor-settings-mobile.php';
 require __DIR__ . '/experimental/blocks.php';
