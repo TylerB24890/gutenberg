@@ -26,7 +26,8 @@
 			"source": "attribute",
 			"selector": "a",
 			"attribute": "href",
-			"__experimentalRole": "content"
+			"__experimentalRole": "content",
+			"bindable": true
 		},
 		"title": {
 			"type": "string",
@@ -39,21 +40,24 @@
 			"type": "rich-text",
 			"source": "rich-text",
 			"selector": "a,button",
-			"__experimentalRole": "content"
+			"__experimentalRole": "content",
+			"bindable": true
 		},
 		"linkTarget": {
 			"type": "string",
 			"source": "attribute",
 			"selector": "a",
 			"attribute": "target",
-			"__experimentalRole": "content"
+			"__experimentalRole": "content",
+			"bindable": true
 		},
 		"rel": {
 			"type": "string",
 			"source": "attribute",
 			"selector": "a",
 			"attribute": "rel",
-			"__experimentalRole": "content"
+			"__experimentalRole": "content",
+			"bindable": true
 		},
 		"placeholder": {
 			"type": "string"

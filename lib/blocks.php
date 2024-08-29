@@ -155,7 +155,7 @@ function gutenberg_reregister_core_block_types() {
 
 			gutenberg_deregister_core_block_and_assets( $metadata['name'] );
 			gutenberg_register_core_block_assets( $folder_name );
-			register_block_type_from_metadata( $block_json_file );
+			gutenberg_register_block_type_from_metadata( $block_json_file );
 		}
 
 		foreach ( $block_names as $file => $sub_block_names ) {
@@ -200,7 +200,7 @@ add_action( 'init', 'gutenberg_reregister_core_block_types' );
  * @see register_block_script_handle()
  */
 function gutenberg_defer_block_view_scripts() {
-	$block_types = WP_Block_Type_Registry::get_instance()->get_all_registered();
+	$block_types = Gutenberg_Block_Type_Registry::get_instance()->get_all_registered();
 	foreach ( $block_types as $block_type ) {
 		foreach ( $block_type->view_script_handles as $view_script_handle ) {
 			wp_script_add_data( $view_script_handle, 'strategy', 'defer' );
@@ -218,7 +218,7 @@ add_action( 'init', 'gutenberg_defer_block_view_scripts', 100 );
  * @return void
  */
 function gutenberg_deregister_core_block_and_assets( $block_name ) {
-	$registry = WP_Block_Type_Registry::get_instance();
+	$registry = Gutenberg_Block_Type_Registry::get_instance();
 	if ( $registry->is_registered( $block_name ) ) {
 		$block_type = $registry->get_registered( $block_name );
 		if ( ! empty( $block_type->view_script_handles ) ) {

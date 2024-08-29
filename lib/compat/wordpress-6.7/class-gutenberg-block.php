@@ -63,16 +63,11 @@ class Gutenberg_Block extends WP_Block {
 	 *
 	 * @return array The computed block attributes for the provided block bindings.
 	 */
-	private function process_block_bindings() {
+	public function process_block_bindings() {
 		$parsed_block               = $this->parsed_block;
-		$computed_attributes        = array();
 		$bindable_attributes        = $this->block_type->get_block_bindable_attributes();
-		$supported_block_attributes = array(
-			'core/paragraph' => array( 'content' ),
-			'core/heading'   => array( 'content' ),
-			'core/image'     => array( 'id', 'url', 'title', 'alt' ),
-			'core/button'    => array( 'url', 'text', 'linkTarget', 'rel' ),
-		);
+		$computed_attributes        = array();
+		$supported_block_attributes = array();
 
 		// Add the bindable attributes to the supported attributes array
 		if ( ! empty( $bindable_attributes ) ) {

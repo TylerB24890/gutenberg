@@ -18,7 +18,8 @@
 			"source": "attribute",
 			"selector": "img",
 			"attribute": "src",
-			"__experimentalRole": "content"
+			"__experimentalRole": "content",
+			"bindable": true
 		},
 		"alt": {
 			"type": "string",
@@ -26,7 +27,8 @@
 			"selector": "img",
 			"attribute": "alt",
 			"default": "",
-			"__experimentalRole": "content"
+			"__experimentalRole": "content",
+			"bindable": true
 		},
 		"caption": {
 			"type": "rich-text",
@@ -45,7 +47,8 @@
 			"source": "attribute",
 			"selector": "img",
 			"attribute": "title",
-			"__experimentalRole": "content"
+			"__experimentalRole": "content",
+			"bindable": true
 		},
 		"href": {
 			"type": "string",
@@ -68,7 +71,8 @@
 		},
 		"id": {
 			"type": "number",
-			"__experimentalRole": "content"
+			"__experimentalRole": "content",
+			"bindable": true
 		},
 		"width": {
 			"type": "string"
