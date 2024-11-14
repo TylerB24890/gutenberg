@@ -30,16 +30,6 @@ test.describe( 'Site editor command palette', () => {
 		await expect( page ).toHaveURL(
 			/\/wp-admin\/site-editor.php\?postId=(\d+)&postType=page&canvas=edit/
 		);
-		await page.evaluate( () => {
-			window.wp.data
-				.dispatch( 'core/preferences' )
-				.set( 'core/edit-post', 'welcomeGuide', false );
-		}, false );
-		await page.getByLabel( 'Template options' ).click();
-
-		await page
-			.getByRole( 'menuitemcheckbox', { name: 'Show template' } )
-			.click();
 
 		await expect(
 			editor.canvas
