@@ -19,7 +19,6 @@
 function gutenberg_post_type_rendering_modes() {
 	return array(
 		'post-only',
-		'template-lock',
 		'template-locked',
 	);
 }
