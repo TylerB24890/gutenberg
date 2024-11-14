@@ -30,7 +30,6 @@ test.describe( 'Site editor command palette', () => {
 		await expect( page ).toHaveURL(
 			/\/wp-admin\/site-editor.php\?postId=(\d+)&postType=page&canvas=edit/
 		);
-
 		await expect(
 			editor.canvas
 				.getByLabel( 'Block: Title' )
