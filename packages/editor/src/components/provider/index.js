@@ -164,35 +164,44 @@ export const ExperimentalEditorProvider = withRegistryProvider(
 		BlockEditorProviderComponent = ExperimentalBlockEditorProvider,
 		__unstableTemplate: template,
 	} ) => {
-		const { editorSettings, selection, isReady, mode, postTypeEntities } =
-			useSelect(
-				( select ) => {
-					const {
-						getEditorSettings,
-						getEditorSelection,
-						__unstableIsEditorReady,
-					} = select( editorStore );
-					const { getEntitiesConfig } = select( coreStore );
+		const {
+			editorSettings,
+			selection,
+			isReady,
+			mode,
+			postTypeEntities,
+			hasLoadedPostObject,
+		} = useSelect(
+			( select ) => {
+				const {
+					getEditorSettings,
+					getEditorSelection,
+					__unstableIsEditorReady,
+				} = select( editorStore );
+				const { getEntitiesConfig } = select( coreStore );
 
-					const postTypeObject = select( coreStore ).getPostType(
-						post.type
-					);
+				const postTypeObject = select( coreStore ).getPostType(
+					post.type
+				);
 
-					return {
-						editorSettings: getEditorSettings(),
-						isReady: __unstableIsEditorReady(),
-						mode:
-							postTypeObject?.default_rendering_mode ??
-							'post-only',
-						selection: getEditorSelection(),
-						postTypeEntities:
-							post.type === 'wp_template'
-								? getEntitiesConfig( 'postType' )
-								: null,
-					};
-				},
-				[ post.type ]
-			);
+				const _hasLoadedPostObject = select(
+					coreStore
+				).hasFinishedResolution( 'getPostType', [ post.type ] );
+
+				return {
+					hasLoadedPostObject: _hasLoadedPostObject,
+					editorSettings: getEditorSettings(),
+					isReady: __unstableIsEditorReady(),
+					mode: postTypeObject?.default_rendering_mode ?? 'post-only',
+					selection: getEditorSelection(),
+					postTypeEntities:
+						post.type === 'wp_template'
+							? getEntitiesConfig( 'postType' )
+							: null,
+				};
+			},
+			[ post.type ]
+		);
 		const shouldRenderTemplate = !! template && mode !== 'post-only';
 		const rootLevelPost = shouldRenderTemplate ? template : post;
 		const defaultBlockContext = useMemo( () => {
@@ -322,7 +331,7 @@ export const ExperimentalEditorProvider = withRegistryProvider(
 		// Register the editor commands.
 		useCommands();
 
-		if ( ! isReady || ! mode ) {
+		if ( ! isReady || ! mode || ! hasLoadedPostObject ) {
 			return null;
 		}
 
