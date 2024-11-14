@@ -1,17 +1,17 @@
 <?php
 /**
- * REST API: Gutenberg_REST_Post_Types_Controller_6_7 class
+ * REST API: Gutenberg_REST_Post_Types_Controller_6_8 class
  *
  * @package gutenberg
  */
 
 /**
- * Gutenberg_REST_Post_Types_Controller_6_7 class
+ * Gutenberg_REST_Post_Types_Controller_6_8 class
  *
  * Add Block Editor default rendering mode to the post type response
  * to allow enabling/disabling at the post type level.
  */
-class Gutenberg_REST_Post_Types_Controller_6_7 extends WP_REST_Post_Types_Controller {
+class Gutenberg_REST_Post_Types_Controller_6_8 extends WP_REST_Post_Types_Controller {
 	/**
 	 * Add Block Editor default rendering mode setting to the response.
 	 *
@@ -28,7 +28,7 @@ class Gutenberg_REST_Post_Types_Controller_6_7 extends WP_REST_Post_Types_Contro
 			/**
 			 * Filters the block editor rendering mode for a post type.
 			 *
-			 * @since 6.7.0
+			 * @since 6.8.0
 			 * @param string       $default_rendering_mode Default rendering mode for the post type.
 			 * @param WP_Post_Type $post_type              Post type name.
 			 * @return string Default rendering mode for the post type.
@@ -41,7 +41,7 @@ class Gutenberg_REST_Post_Types_Controller_6_7 extends WP_REST_Post_Types_Contro
 			 *
 			 * The dynamic portion of the hook name, `$item->name`, refers to the post type slug.
 			 *
-			 * @since 6.7.0
+			 * @since 6.8.0
 			 * @param string       $default_rendering_mode Default rendering mode for the post type.
 			 * @param WP_Post_Type $post_type              Post type object.
 			 * @return string Default rendering mode for the post type.
