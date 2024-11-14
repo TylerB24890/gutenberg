@@ -1131,7 +1131,10 @@ test.describe( 'Pattern Overrides', () => {
 			/\/wp-content\/uploads\//
 		);
 		await editor.showBlockToolbar();
-		await editor.clickBlockToolbarButton( 'Alt' );
+		await editor.clickBlockToolbarButton( 'More' );
+		await page
+			.getByRole( 'menuitem', { name: 'Alternative text' } )
+			.click();
 		await page
 			.getByRole( 'textbox', { name: 'alternative text' } )
 			.fill( 'Test Image' );

@@ -248,6 +248,12 @@ _Returns_
 
 Returns the post type of the post currently being edited.
 
+_Usage_
+
+```js
+const currentPostType = wp.data.select( 'core/editor' ).getCurrentPostType();
+```
+
 _Parameters_
 
 -   _state_ `Object`: Global application state.
@@ -283,6 +289,24 @@ _Returns_
 ### getEditedPostAttribute
 
 Returns a single attribute of the post being edited, preferring the unsaved edit if one exists, but falling back to the attribute for the last known saved state of the post.
+
+_Usage_
+
+```js
+// Get specific media size based on the featured media ID
+// Note: change sizes?.large for any registered size
+const getFeaturedMediaUrl = useSelect( ( select ) => {
+	const getFeaturedMediaId =
+		select( 'core/editor' ).getEditedPostAttribute( 'featured_media' );
+	const getMedia = select( 'core' ).getMedia( getFeaturedMediaId );
+
+	return (
+		getMedia?.media_details?.sizes?.large?.source_url ||
+		getMedia?.source_url ||
+		''
+	);
+}, [] );
+```
 
 _Parameters_
 
@@ -762,7 +786,7 @@ Return true if the current post has already been published.
 _Parameters_
 
 -   _state_ `Object`: Global application state.
--   _currentPost_ `Object?`: Explicit current post for bypassing registry selector.
+-   _currentPost_ `[Object]`: Explicit current post for bypassing registry selector.
 
 _Returns_
 
@@ -1154,10 +1178,37 @@ Disables the publish sidebar.
 
 Returns an action object used in signalling that attributes of the post have been edited.
 
+_Usage_
+
+```js
+// Update the post title
+wp.data.dispatch( 'core/editor' ).editPost( { title: `${ newTitle }` } );
+```
+
+```js
+// Get specific media size based on the featured media ID
+// Note: change sizes?.large for any registered size
+const getFeaturedMediaUrl = useSelect( ( select ) => {
+	const getFeaturedMediaId =
+		select( 'core/editor' ).getEditedPostAttribute( 'featured_media' );
+	const getMedia = select( 'core' ).getMedia( getFeaturedMediaId );
+
+	return (
+		getMedia?.media_details?.sizes?.large?.source_url ||
+		getMedia?.source_url ||
+		''
+	);
+}, [] );
+```
+
 _Parameters_
 
 -   _edits_ `Object`: Post attributes to edit.
 -   _options_ `Object`: Options for the edit.
+
+_Returns_
+
+-   `Object`: Action object
 
 ### enablePublishSidebar
 
@@ -1422,6 +1473,10 @@ _Parameters_
 -   _value_ `boolean|Object`: Whether the inserter should be opened (true) or closed (false). To specify an insertion point, use an object.
 -   _value.rootClientId_ `string`: The root client ID to insert at.
 -   _value.insertionIndex_ `number`: The index to insert at.
+-   _value.filterValue_ `string`: A query to filter the inserter results.
+-   _value.onSelect_ `Function`: A callback when an item is selected.
+-   _value.tab_ `string`: The tab to open in the inserter.
+-   _value.category_ `string`: The category to initialize in the inserter.
 
 _Returns_
 
@@ -1530,6 +1585,11 @@ _Related_
 
 Action that toggles Distraction free mode. Distraction free mode expects there are no sidebars, as due to the z-index values set, you can't close sidebars.
 
+_Parameters_
+
+-   _options_ `[Object]`: Optional configuration object
+-   _options.createNotice_ `[boolean]`: Whether to create a notice
+
 ### toggleEditorPanelEnabled
 
 Returns an action object used to enable or disable a panel in the editor.
@@ -1563,6 +1623,14 @@ _Returns_
 _Related_
 
 -   toggleSelection in core/block-editor store.
+
+### toggleSpotlightMode
+
+Action that toggles the Spotlight Mode view option.
+
+### toggleTopToolbar
+
+Action that toggles the Top Toolbar view option.
 
 ### trashPost
 

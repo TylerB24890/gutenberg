@@ -15,7 +15,11 @@ import warning from '@wordpress/warning';
  * Internal dependencies
  */
 import { isValidIcon, normalizeIconObject, omit } from '../api/utils';
-import { BLOCK_ICON_DEFAULT, DEPRECATED_ENTRY_KEYS } from '../api/constants';
+import {
+	BLOCK_ICON_DEFAULT,
+	DEPRECATED_ENTRY_KEYS,
+	TYPOGRAPHY_SUPPORTS_EXPERIMENTAL_TO_STABLE,
+} from '../api/constants';
 
 /** @typedef {import('../api/registration').WPBlockType} WPBlockType */
 
@@ -62,6 +66,39 @@ function mergeBlockVariations(
 	return result;
 }
 
+function stabilizeSupports( rawSupports ) {
+	if ( ! rawSupports ) {
+		return rawSupports;
+	}
+
+	// Create a new object to avoid mutating the original. This ensures that
+	// custom block plugins that rely on immutable supports are not affected.
+	// See: https://github.com/WordPress/gutenberg/pull/66849#issuecomment-2463614281
+	const newSupports = {};
+	for ( const [ key, value ] of Object.entries( rawSupports ) ) {
+		if (
+			key === 'typography' &&
+			typeof value === 'object' &&
+			value !== null
+		) {
+			newSupports.typography = Object.fromEntries(
+				Object.entries( value ).map(
+					( [ typographyKey, typographyValue ] ) => [
+						TYPOGRAPHY_SUPPORTS_EXPERIMENTAL_TO_STABLE[
+							typographyKey
+						] || typographyKey,
+						typographyValue,
+					]
+				)
+			);
+		} else {
+			newSupports[ key ] = value;
+		}
+	}
+
+	return newSupports;
+}
+
 /**
  * Takes the unprocessed block type settings, merges them with block type metadata
  * and applies all the existing filters for the registered block type.
@@ -102,12 +139,19 @@ export const processBlockType =
 			),
 		};
 
+		// Stabilize any experimental supports before applying filters.
+		blockType.supports = stabilizeSupports( blockType.supports );
+
 		const settings = applyFilters(
 			'blocks.registerBlockType',
 			blockType,
 			name,
 			null
 		);
+
+		// Re-stabilize any experimental supports after applying filters.
+		// This ensures that any supports updated by filters are also stabilized.
+		blockType.supports = stabilizeSupports( blockType.supports );
 
 		if (
 			settings.description &&
@@ -119,29 +163,40 @@ export const processBlockType =
 		}
 
 		if ( settings.deprecated ) {
-			settings.deprecated = settings.deprecated.map( ( deprecation ) =>
-				Object.fromEntries(
-					Object.entries(
-						// Only keep valid deprecation keys.
-						applyFilters(
-							'blocks.registerBlockType',
-							// Merge deprecation keys with pre-filter settings
-							// so that filters that depend on specific keys being
-							// present don't fail.
-							{
-								// Omit deprecation keys here so that deprecations
-								// can opt out of specific keys like "supports".
-								...omit( blockType, DEPRECATED_ENTRY_KEYS ),
-								...deprecation,
-							},
-							blockType.name,
-							deprecation
-						)
-					).filter( ( [ key ] ) =>
+			settings.deprecated = settings.deprecated.map( ( deprecation ) => {
+				// Stabilize any experimental supports before applying filters.
+				let filteredDeprecation = {
+					...deprecation,
+					supports: stabilizeSupports( deprecation.supports ),
+				};
+
+				filteredDeprecation = // Only keep valid deprecation keys.
+					applyFilters(
+						'blocks.registerBlockType',
+						// Merge deprecation keys with pre-filter settings
+						// so that filters that depend on specific keys being
+						// present don't fail.
+						{
+							// Omit deprecation keys here so that deprecations
+							// can opt out of specific keys like "supports".
+							...omit( blockType, DEPRECATED_ENTRY_KEYS ),
+							...filteredDeprecation,
+						},
+						blockType.name,
+						filteredDeprecation
+					);
+				// Re-stabilize any experimental supports after applying filters.
+				// This ensures that any supports updated by filters are also stabilized.
+				filteredDeprecation.supports = stabilizeSupports(
+					filteredDeprecation.supports
+				);
+
+				return Object.fromEntries(
+					Object.entries( filteredDeprecation ).filter( ( [ key ] ) =>
 						DEPRECATED_ENTRY_KEYS.includes( key )
 					)
-				)
-			);
+				);
+			} );
 		}
 
 		if ( ! isPlainObject( settings ) ) {
@@ -193,6 +248,42 @@ export const processBlockType =
 			warning(
 				'The icon passed is invalid. ' +
 					'The icon should be a string, an element, a function, or an object following the specifications documented in https://developer.wordpress.org/block-editor/developers/block-api/block-registration/#icon-optional'
+			);
+			return;
+		}
+
+		if (
+			typeof settings?.parent === 'string' ||
+			settings?.parent instanceof String
+		) {
+			settings.parent = [ settings.parent ];
+			warning(
+				'Parent must be undefined or an array of strings (block types), but it is a string.'
+			);
+			// Intentionally continue:
+			//
+			// While string values were never supported, they appeared to work with some unintended side-effects
+			// that have been fixed by [#66250](https://github.com/WordPress/gutenberg/pull/66250).
+			//
+			// To be backwards-compatible, this code that automatically migrates strings to arrays.
+		}
+
+		if (
+			! Array.isArray( settings?.parent ) &&
+			settings?.parent !== undefined
+		) {
+			warning(
+				'Parent must be undefined or an array of block types, but it is ',
+				settings.parent
+			);
+			return;
+		}
+
+		if ( 1 === settings?.parent?.length && name === settings.parent[ 0 ] ) {
+			warning(
+				'Block "' +
+					name +
+					'" cannot be a parent of itself. Please remove the block name from the parent list.'
 			);
 			return;
 		}

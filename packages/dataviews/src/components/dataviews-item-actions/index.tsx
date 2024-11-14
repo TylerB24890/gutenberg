@@ -23,13 +23,7 @@ import { useRegistry } from '@wordpress/data';
 import { unlock } from '../../lock-unlock';
 import type { Action, ActionModal as ActionModalType } from '../../types';
 
-const {
-	DropdownMenuV2: DropdownMenu,
-	DropdownMenuGroupV2: DropdownMenuGroup,
-	DropdownMenuItemV2: DropdownMenuItem,
-	DropdownMenuItemLabelV2: DropdownMenuItemLabel,
-	kebabCase,
-} = unlock( componentsPrivateApis );
+const { Menu, kebabCase } = unlock( componentsPrivateApis );
 
 export interface ActionTriggerProps< Item > {
 	action: Action< Item >;
@@ -49,7 +43,7 @@ interface ActionWithModalProps< Item > extends ActionModalProps< Item > {
 	isBusy?: boolean;
 }
 
-interface ActionsDropdownMenuGroupProps< Item > {
+interface ActionsMenuGroupProps< Item > {
 	actions: Action< Item >[];
 	item: Item;
 }
@@ -83,7 +77,7 @@ function ButtonTrigger< Item >( {
 	);
 }
 
-function DropdownMenuItemTrigger< Item >( {
+function MenuItemTrigger< Item >( {
 	action,
 	onClick,
 	items,
@@ -91,12 +85,12 @@ function DropdownMenuItemTrigger< Item >( {
 	const label =
 		typeof action.label === 'string' ? action.label : action.label( items );
 	return (
-		<DropdownMenuItem
+		<Menu.Item
 			onClick={ onClick }
 			hideOnClick={ ! ( 'RenderModal' in action ) }
 		>
-			<DropdownMenuItemLabel>{ label }</DropdownMenuItemLabel>
-		</DropdownMenuItem>
+			<Menu.ItemLabel>{ label }</Menu.ItemLabel>
+		</Menu.Item>
 	);
 }
 
@@ -152,13 +146,13 @@ export function ActionWithModal< Item >( {
 	);
 }
 
-export function ActionsDropdownMenuGroup< Item >( {
+export function ActionsMenuGroup< Item >( {
 	actions,
 	item,
-}: ActionsDropdownMenuGroupProps< Item > ) {
+}: ActionsMenuGroupProps< Item > ) {
 	const registry = useRegistry();
 	return (
-		<DropdownMenuGroup>
+		<Menu.Group>
 			{ actions.map( ( action ) => {
 				if ( 'RenderModal' in action ) {
 					return (
@@ -166,12 +160,12 @@ export function ActionsDropdownMenuGroup< Item >( {
 							key={ action.id }
 							action={ action }
 							items={ [ item ] }
-							ActionTrigger={ DropdownMenuItemTrigger }
+							ActionTrigger={ MenuItemTrigger }
 						/>
 					);
 				}
 				return (
-					<DropdownMenuItemTrigger
+					<MenuItemTrigger
 						key={ action.id }
 						action={ action }
 						onClick={ () => {
@@ -181,7 +175,7 @@ export function ActionsDropdownMenuGroup< Item >( {
 					/>
 				);
 			} ) }
-		</DropdownMenuGroup>
+		</Menu.Group>
 	);
 }
 
@@ -251,7 +245,7 @@ function CompactItemActions< Item >( {
 	actions,
 }: CompactItemActionsProps< Item > ) {
 	return (
-		<DropdownMenu
+		<Menu
 			trigger={
 				<Button
 					size="compact"
@@ -264,7 +258,7 @@ function CompactItemActions< Item >( {
 			}
 			placement="bottom-end"
 		>
-			<ActionsDropdownMenuGroup actions={ actions } item={ item } />
-		</DropdownMenu>
+			<ActionsMenuGroup actions={ actions } item={ item } />
+		</Menu>
 	);
 }

@@ -10,14 +10,16 @@ import {
 	Button,
 } from '@wordpress/components';
 import { useState, useMemo } from '@wordpress/element';
-import { sprintf, __ } from '@wordpress/i18n';
+import { sprintf, __, _x } from '@wordpress/i18n';
 import { closeSmall } from '@wordpress/icons';
 
 /**
  * Internal dependencies
  */
 import { normalizeFields } from '../../normalize-fields';
-import type { DataFormProps, NormalizedField, Field } from '../../types';
+import { getVisibleFields } from '../get-visible-fields';
+import type { DataFormProps, NormalizedField } from '../../types';
+import FormFieldVisibility from '../../components/form-field-visibility';
 
 interface FormFieldProps< Item > {
 	data: Item;
@@ -44,10 +46,10 @@ function DropdownHeader( {
 				<Spacer />
 				{ onClose && (
 					<Button
-						className="dataforms-layouts-panel__dropdown-header-action"
 						label={ __( 'Close' ) }
 						icon={ closeSmall }
 						onClick={ onClose }
+						size="small"
 					/>
 				) }
 			</HStack>
@@ -104,7 +106,7 @@ function FormField< Item >( {
 							aria-expanded={ isOpen }
 							aria-label={ sprintf(
 								// translators: %s: Field name.
-								__( 'Edit %s' ),
+								_x( 'Edit %s', 'field' ),
 								field.label
 							) }
 							onClick={ onToggle }
@@ -142,25 +144,30 @@ export default function FormPanel< Item >( {
 	const visibleFields = useMemo(
 		() =>
 			normalizeFields(
-				( form.fields ?? [] )
-					.map( ( fieldId ) =>
-						fields.find( ( { id } ) => id === fieldId )
-					)
-					.filter( ( field ): field is Field< Item > => !! field )
+				getVisibleFields< Item >(
+					fields,
+					form.fields,
+					form.combinedFields
+				)
 			),
-		[ fields, form.fields ]
+		[ fields, form.fields, form.combinedFields ]
 	);
 
 	return (
 		<VStack spacing={ 2 }>
 			{ visibleFields.map( ( field ) => {
 				return (
-					<FormField
+					<FormFieldVisibility
 						key={ field.id }
 						data={ data }
 						field={ field }
-						onChange={ onChange }
-					/>
+					>
+						<FormField
+							data={ data }
+							field={ field }
+							onChange={ onChange }
+						/>
+					</FormFieldVisibility>
 				);
 			} ) }
 		</VStack>

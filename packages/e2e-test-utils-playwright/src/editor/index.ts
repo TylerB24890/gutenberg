@@ -29,6 +29,7 @@ import { setIsFixedToolbar } from './set-is-fixed-toolbar';
 import { setRenderingMode } from './set-rendering-mode';
 import { switchToLegacyCanvas } from './switch-to-legacy-canvas';
 import { transformBlockTo } from './transform-block-to';
+import { switchEditorTool } from './switch-editor-tool';
 
 type EditorConstructorProps = {
 	page: Page;
@@ -87,6 +88,8 @@ export class Editor {
 		setIsFixedToolbar.bind( this );
 	/** @borrows setRenderingMode as this.setRenderingMode */
 	setRenderingMode: typeof setRenderingMode = setRenderingMode.bind( this );
+	/** @borrows switchEditorTool as this.switchEditorTool */
+	switchEditorTool: typeof switchEditorTool = switchEditorTool.bind( this );
 	/** @borrows switchToLegacyCanvas as this.switchToLegacyCanvas */
 	switchToLegacyCanvas: typeof switchToLegacyCanvas =
 		switchToLegacyCanvas.bind( this );

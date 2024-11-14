@@ -179,6 +179,7 @@ function getItemId( item ) {
 
 export default function PostList( { postType } ) {
 	const [ view, setView ] = useView( postType );
+	const defaultViews = useDefaultViews( { postType } );
 	const history = useHistory();
 	const location = useLocation();
 	const {
@@ -202,7 +203,24 @@ export default function PostList( { postType } ) {
 		[ history ]
 	);
 
-	const { isLoading: isLoadingFields, fields } = usePostFields( view.type );
+	const getActiveViewFilters = ( views, match ) => {
+		const found = views.find( ( { slug } ) => slug === match );
+		return found?.filters ?? [];
+	};
+
+	const { isLoading: isLoadingFields, fields: _fields } = usePostFields();
+	const fields = useMemo( () => {
+		const activeViewFilters = getActiveViewFilters(
+			defaultViews,
+			activeView
+		).map( ( { field } ) => field );
+		return _fields.map( ( field ) => ( {
+			...field,
+			elements: activeViewFilters.includes( field.id )
+				? []
+				: field.elements,
+		} ) );
+	}, [ _fields, defaultViews, activeView ] );
 
 	const queryArgs = useMemo( () => {
 		const filters = {};
@@ -225,6 +243,32 @@ export default function PostList( { postType } ) {
 				filters.author_exclude = filter.value;
 			}
 		} );
+
+		// The bundled views want data filtered without displaying the filter.
+		const activeViewFilters = getActiveViewFilters(
+			defaultViews,
+			activeView
+		);
+		activeViewFilters.forEach( ( filter ) => {
+			if (
+				filter.field === 'status' &&
+				filter.operator === OPERATOR_IS_ANY
+			) {
+				filters.status = filter.value;
+			}
+			if (
+				filter.field === 'author' &&
+				filter.operator === OPERATOR_IS_ANY
+			) {
+				filters.author = filter.value;
+			} else if (
+				filter.field === 'author' &&
+				filter.operator === OPERATOR_IS_NONE
+			) {
+				filters.author_exclude = filter.value;
+			}
+		} );
+
 		// We want to provide a different default item for the status filter
 		// than the REST API provides.
 		if ( ! filters.status || filters.status === '' ) {
@@ -240,7 +284,7 @@ export default function PostList( { postType } ) {
 			search: view.search,
 			...filters,
 		};
-	}, [ view ] );
+	}, [ view, activeView, defaultViews ] );
 	const {
 		records,
 		isResolving: isLoadingData,
@@ -356,6 +400,14 @@ export default function PostList( { postType } ) {
 				onChangeView={ setView }
 				selection={ selection }
 				onChangeSelection={ onChangeSelection }
+				isItemClickable={ ( item ) => item.status !== 'trash' }
+				onClickItem={ ( { id } ) => {
+					history.push( {
+						postId: id,
+						postType,
+						canvas: 'edit',
+					} );
+				} }
 				getItemId={ getItemId }
 				defaultLayouts={ defaultLayouts }
 				header={
@@ -366,7 +418,7 @@ export default function PostList( { postType } ) {
 							size="compact"
 							isPressed={ quickEdit }
 							icon={ drawerRight }
-							label={ __( 'Toggle details panel' ) }
+							label={ __( 'Details' ) }
 							onClick={ () => {
 								history.push( {
 									...location.params,

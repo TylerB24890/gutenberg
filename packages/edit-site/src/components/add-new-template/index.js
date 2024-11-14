@@ -107,6 +107,7 @@ function TemplateListItem( {
 } ) {
 	return (
 		<Button
+			__next40pxDefaultSize
 			className={ className }
 			onClick={ onClick }
 			label={ description }
@@ -164,14 +165,10 @@ function NewTemplateModal( { onClose } ) {
 
 	const isMobile = useViewportMatch( 'medium', '<' );
 
-	const { homeUrl } = useSelect( ( select ) => {
-		const {
-			getUnstableBase, // Site index.
-		} = select( coreStore );
-
-		return {
-			homeUrl: getUnstableBase()?.home,
-		};
+	const homeUrl = useSelect( ( select ) => {
+		// Site index.
+		return select( coreStore ).getEntityRecord( 'root', '__unstableBase' )
+			?.home;
 	}, [] );
 
 	const TEMPLATE_SHORT_DESCRIPTIONS = {
@@ -214,7 +211,7 @@ function NewTemplateModal( { onClose } ) {
 
 			createSuccessNotice(
 				sprintf(
-					// translators: %s: Title of the created template e.g: "Category".
+					// translators: %s: Title of the created post or template, e.g: "Hello world".
 					__( '"%s" successfully created.' ),
 					decodeEntities( newTemplate.title?.rendered || title )
 				),

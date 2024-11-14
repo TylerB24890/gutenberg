@@ -284,6 +284,111 @@ class WP_Block_Supports_Typography_Test extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Tests that stabilized typography supports will also apply to blocks using
+	 * the experimental syntax, for backwards compatibility with existing blocks.
+	 *
+	 * @covers ::gutenberg_apply_typography_support
+	 */
+	public function test_should_apply_experimental_typography_supports() {
+		$this->test_block_name = 'test/experimental-typography-supports';
+		register_block_type(
+			$this->test_block_name,
+			array(
+				'api_version' => 3,
+				'attributes'  => array(
+					'style' => array(
+						'type' => 'object',
+					),
+				),
+				'supports'    => array(
+					'typography' => array(
+						'__experimentalFontFamily'     => true,
+						'__experimentalFontStyle'      => true,
+						'__experimentalFontWeight'     => true,
+						'__experimentalLetterSpacing'  => true,
+						'__experimentalTextDecoration' => true,
+						'__experimentalTextTransform'  => true,
+					),
+				),
+			)
+		);
+		$registry   = WP_Block_Type_Registry::get_instance();
+		$block_type = $registry->get_registered( $this->test_block_name );
+		$block_atts = array(
+			'fontFamily' => 'serif',
+			'style'      => array(
+				'typography' => array(
+					'fontStyle'      => 'italic',
+					'fontWeight'     => 'bold',
+					'letterSpacing'  => '1px',
+					'textDecoration' => 'underline',
+					'textTransform'  => 'uppercase',
+				),
+			),
+		);
+
+		$actual   = gutenberg_apply_typography_support( $block_type, $block_atts );
+		$expected = array(
+			'class' => 'has-serif-font-family',
+			'style' => 'font-style:italic;font-weight:bold;text-decoration:underline;text-transform:uppercase;letter-spacing:1px;',
+		);
+
+		$this->assertSame( $expected, $actual );
+	}
+
+	/**
+	 * Tests that stabilized typography supports are applied correctly.
+	 *
+	 * @covers ::gutenberg_apply_typography_support
+	 */
+	public function test_should_apply_stabilized_typography_supports() {
+		$this->test_block_name = 'test/experimental-typography-supports';
+		register_block_type(
+			$this->test_block_name,
+			array(
+				'api_version' => 3,
+				'attributes'  => array(
+					'style' => array(
+						'type' => 'object',
+					),
+				),
+				'supports'    => array(
+					'typography' => array(
+						'fontFamily'     => true,
+						'fontStyle'      => true,
+						'fontWeight'     => true,
+						'letterSpacing'  => true,
+						'textDecoration' => true,
+						'textTransform'  => true,
+					),
+				),
+			)
+		);
+		$registry   = WP_Block_Type_Registry::get_instance();
+		$block_type = $registry->get_registered( $this->test_block_name );
+		$block_atts = array(
+			'fontFamily' => 'serif',
+			'style'      => array(
+				'typography' => array(
+					'fontStyle'      => 'italic',
+					'fontWeight'     => 'bold',
+					'letterSpacing'  => '1px',
+					'textDecoration' => 'underline',
+					'textTransform'  => 'uppercase',
+				),
+			),
+		);
+
+		$actual   = gutenberg_apply_typography_support( $block_type, $block_atts );
+		$expected = array(
+			'class' => 'has-serif-font-family',
+			'style' => 'font-style:italic;font-weight:bold;text-decoration:underline;text-transform:uppercase;letter-spacing:1px;',
+		);
+
+		$this->assertSame( $expected, $actual );
+	}
+
+	/**
 	 * Tests generating font size values, including fluid formulae, from fontSizes preset.
 	 *
 	 * @covers ::wp_get_typography_font_size_value
@@ -351,7 +456,11 @@ class WP_Block_Supports_Typography_Test extends WP_UnitTestCase {
 				'font_size'       => array(
 					'size' => null,
 				),
-				'settings'        => null,
+				'settings'        => array(
+					'typography' => array(
+						'fluid' => true,
+					),
+				),
 				'expected_output' => null,
 			),
 
@@ -425,8 +534,7 @@ class WP_Block_Supports_Typography_Test extends WP_UnitTestCase {
 
 			'returns already clamped value'              => array(
 				'font_size'       => array(
-					'size'  => 'clamp(21px, 1.313rem + ((1vw - 7.68px) * 2.524), 42px)',
-					'fluid' => false,
+					'size' => 'clamp(21px, 1.313rem + ((1vw - 7.68px) * 2.524), 42px)',
 				),
 				'settings'        => array(
 					'typography' => array(
@@ -438,8 +546,7 @@ class WP_Block_Supports_Typography_Test extends WP_UnitTestCase {
 
 			'returns value with unsupported unit'        => array(
 				'font_size'       => array(
-					'size'  => '1000%',
-					'fluid' => false,
+					'size' => '1000%',
 				),
 				'settings'        => array(
 					'typography' => array(
@@ -768,6 +875,33 @@ class WP_Block_Supports_Typography_Test extends WP_UnitTestCase {
 					),
 				),
 				'expected_output' => 'clamp(100px, 6.25rem + ((1vw - 3.2px) * 7.813), 200px)',
+			),
+
+			// Individual preset settings override global settings.
+			'should convert individual preset size to fluid if fluid is disabled in global settings' => array(
+				'font_size'       => array(
+					'size'  => '17px',
+					'fluid' => true,
+				),
+				'settings'        => array(
+					'typography' => array(),
+				),
+				'expected_output' => 'clamp(14px, 0.875rem + ((1vw - 3.2px) * 0.234), 17px)',
+			),
+			'should use individual preset settings if fluid is disabled in global settings' => array(
+				'font_size'       => array(
+					'size'  => '17px',
+					'fluid' => array(
+						'min' => '16px',
+						'max' => '26px',
+					),
+				),
+				'settings'        => array(
+					'typography' => array(
+						'fluid' => false,
+					),
+				),
+				'expected_output' => 'clamp(16px, 1rem + ((1vw - 3.2px) * 0.781), 26px)',
 			),
 		);
 	}

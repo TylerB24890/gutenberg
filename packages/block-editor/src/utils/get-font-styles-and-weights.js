@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies
  */
-import { _x, __, sprintf } from '@wordpress/i18n';
+import { _x, sprintf } from '@wordpress/i18n';
 
 /**
  * Internal dependencies
@@ -79,7 +79,10 @@ export function getFontStylesAndWeights( fontFamilyFaces ) {
 
 	fontFamilyFaces?.forEach( ( face ) => {
 		// Check for variable font by looking for a space in the font weight value. e.g. "100 900"
-		if ( /\s/.test( face.fontWeight.trim() ) ) {
+		if (
+			'string' === typeof face.fontWeight &&
+			/\s/.test( face.fontWeight.trim() )
+		) {
 			isVariableFont = true;
 
 			// Find font weight start and end values.
@@ -105,11 +108,15 @@ export function getFontStylesAndWeights( fontFamilyFaces ) {
 		}
 
 		// Format font style and weight values.
-		const fontWeight = formatFontWeight( face.fontWeight );
+		const fontWeight = formatFontWeight(
+			'number' === typeof face.fontWeight
+				? face.fontWeight.toString()
+				: face.fontWeight
+		);
 		const fontStyle = formatFontStyle( face.fontStyle );
 
 		// Create font style and font weight lists without duplicates.
-		if ( fontStyle ) {
+		if ( fontStyle && Object.keys( fontStyle ).length ) {
 			if (
 				! fontStyles.some(
 					( style ) => style.value === fontStyle.value
@@ -118,7 +125,8 @@ export function getFontStylesAndWeights( fontFamilyFaces ) {
 				fontStyles.push( fontStyle );
 			}
 		}
-		if ( fontWeight ) {
+
+		if ( fontWeight && Object.keys( fontWeight ).length ) {
 			if (
 				! fontWeights.some(
 					( weight ) => weight.value === fontWeight.value
@@ -165,7 +173,7 @@ export function getFontStylesAndWeights( fontFamilyFaces ) {
 					? weightName
 					: sprintf(
 							/* translators: 1: Font weight name. 2: Font style name. */
-							__( '%1$s %2$s' ),
+							_x( '%1$s %2$s', 'font' ),
 							weightName,
 							styleName
 					  );

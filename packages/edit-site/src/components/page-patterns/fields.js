@@ -10,7 +10,7 @@ import {
 	__experimentalHStack as HStack,
 	Button,
 	Tooltip,
-	Flex,
+	FlexBlock,
 } from '@wordpress/components';
 import { __, _x } from '@wordpress/i18n';
 import { useState, useMemo, useId } from '@wordpress/element';
@@ -25,7 +25,6 @@ import { decodeEntities } from '@wordpress/html-entities';
 /**
  * Internal dependencies
  */
-import { Async } from '../async';
 import {
 	PATTERN_TYPES,
 	TEMPLATE_PART_POST_TYPE,
@@ -45,7 +44,7 @@ function PreviewWrapper( { item, onClick, ariaDescribedBy, children } ) {
 			className="page-patterns-preview-field__button"
 			type="button"
 			onClick={ item.type !== PATTERN_TYPES.theme ? onClick : undefined }
-			aria-label={ item.title }
+			aria-label={ defaultGetTitle( item ) }
 			aria-describedby={ ariaDescribedBy }
 			aria-disabled={ item.type === PATTERN_TYPES.theme }
 		>
@@ -88,12 +87,12 @@ function PreviewField( { item } ) {
 				{ isEmpty && isTemplatePart && __( 'Empty template part' ) }
 				{ isEmpty && ! isTemplatePart && __( 'Empty pattern' ) }
 				{ ! isEmpty && (
-					<Async>
+					<BlockPreview.Async>
 						<BlockPreview
 							blocks={ blocks }
 							viewportWidth={ item.viewportWidth }
 						/>
-					</Async>
+					</BlockPreview.Async>
 				) }
 			</PreviewWrapper>
 			{ !! description && (
@@ -123,16 +122,12 @@ function TitleField( { item } ) {
 	const title = decodeEntities( defaultGetTitle( item ) );
 	return (
 		<HStack alignment="center" justify="flex-start" spacing={ 2 }>
-			<Flex
-				as="div"
-				gap={ 0 }
-				justify="left"
-				className="edit-site-patterns__pattern-title"
-			>
+			<FlexBlock className="edit-site-patterns__pattern-title">
 				{ item.type === PATTERN_TYPES.theme ? (
 					title
 				) : (
 					<Button
+						__next40pxDefaultSize
 						variant="link"
 						onClick={ onClick }
 						// Required for the grid's roving tab index system.
@@ -142,7 +137,7 @@ function TitleField( { item } ) {
 						{ title }
 					</Button>
 				) }
-			</Flex>
+			</FlexBlock>
 			{ item.type === PATTERN_TYPES.theme && (
 				<Tooltip
 					placement="top"

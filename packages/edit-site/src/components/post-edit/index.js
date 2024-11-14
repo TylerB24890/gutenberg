@@ -23,6 +23,14 @@ import { unlock } from '../../lock-unlock';
 
 const { PostCardPanel } = unlock( editorPrivateApis );
 
+const fieldsWithBulkEditSupport = [
+	'title',
+	'status',
+	'date',
+	'author',
+	'comment_status',
+];
+
 function PostEditForm( { postType, postId } ) {
 	const ids = useMemo( () => postId.split( ',' ), [ postId ] );
 	const { record } = useSelect(
@@ -58,20 +66,51 @@ function PostEditForm( { postType, postId } ) {
 			} ),
 		[ _fields ]
 	);
-	const form = {
-		type: 'panel',
-		fields: [ 'title', 'status', 'date', 'author', 'comment_status' ],
-	};
+
+	const form = useMemo(
+		() => ( {
+			type: 'panel',
+			fields: [
+				'featured_media',
+				'title',
+				'status_and_visibility',
+				'author',
+				'date',
+				'slug',
+				'parent',
+				'comment_status',
+			].filter(
+				( field ) =>
+					ids.length === 1 ||
+					fieldsWithBulkEditSupport.includes( field )
+			),
+			combinedFields: [
+				{
+					id: 'status_and_visibility',
+					label: __( 'Status & Visibility' ),
+					children: [ 'status', 'password' ],
+					direction: 'vertical',
+					render: ( { item } ) => item.status,
+				},
+			],
+		} ),
+		[ ids ]
+	);
 	const onChange = ( edits ) => {
 		for ( const id of ids ) {
 			if (
+				edits.status &&
 				edits.status !== 'future' &&
-				record.status === 'future' &&
+				record?.status === 'future' &&
 				new Date( record.date ) > new Date()
 			) {
 				edits.date = null;
 			}
-			if ( edits.status === 'private' && record.password ) {
+			if (
+				edits.status &&
+				edits.status === 'private' &&
+				record.password
+			) {
 				edits.password = '';
 			}
 			editEntityRecord( 'postType', postType, id, edits );

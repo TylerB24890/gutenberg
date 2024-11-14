@@ -8,18 +8,11 @@ import clsx from 'clsx';
  */
 import { __ } from '@wordpress/i18n';
 import {
-	CheckboxControl,
 	Spinner,
 	__experimentalHStack as HStack,
 	__experimentalVStack as VStack,
 } from '@wordpress/components';
-import {
-	useEffect,
-	useId,
-	useRef,
-	useState,
-	useMemo,
-} from '@wordpress/element';
+import { useEffect, useId, useRef, useState } from '@wordpress/element';
 
 /**
  * Internal dependencies
@@ -30,6 +23,7 @@ import { sortValues } from '../../constants';
 import {
 	useSomeItemHasAPossibleBulkAction,
 	useHasAPossibleBulkAction,
+	BulkSelectionCheckbox,
 } from '../../components/dataviews-bulk-actions';
 import type {
 	Action,
@@ -40,19 +34,15 @@ import type {
 } from '../../types';
 import type { SetSelection } from '../../private-types';
 import ColumnHeaderMenu from './column-header-menu';
-
-interface BulkSelectionCheckboxProps< Item > {
-	selection: string[];
-	onChangeSelection: SetSelection;
-	data: Item[];
-	actions: Action< Item >[];
-	getItemId: ( item: Item ) => string;
-}
+import { getVisibleFieldIds } from '../index';
+import getClickableItemProps from '../utils/get-clickable-item-props';
 
 interface TableColumnFieldProps< Item > {
 	primaryField?: NormalizedField< Item >;
 	field: NormalizedField< Item >;
 	item: Item;
+	isItemClickable: ( item: Item ) => boolean;
+	onClickItem: ( item: Item ) => void;
 }
 
 interface TableColumnCombinedProps< Item > {
@@ -61,6 +51,8 @@ interface TableColumnCombinedProps< Item > {
 	field: CombinedField;
 	item: Item;
 	view: ViewTableType;
+	isItemClickable: ( item: Item ) => boolean;
+	onClickItem: ( item: Item ) => void;
 }
 
 interface TableColumnProps< Item > {
@@ -69,6 +61,8 @@ interface TableColumnProps< Item > {
 	item: Item;
 	column: string;
 	view: ViewTableType;
+	isItemClickable: ( item: Item ) => boolean;
+	onClickItem: ( item: Item ) => void;
 }
 
 interface TableRowProps< Item > {
@@ -82,50 +76,8 @@ interface TableRowProps< Item > {
 	selection: string[];
 	getItemId: ( item: Item ) => string;
 	onChangeSelection: SetSelection;
-}
-
-function BulkSelectionCheckbox< Item >( {
-	selection,
-	onChangeSelection,
-	data,
-	actions,
-	getItemId,
-}: BulkSelectionCheckboxProps< Item > ) {
-	const selectableItems = useMemo( () => {
-		return data.filter( ( item ) => {
-			return actions.some(
-				( action ) =>
-					action.supportsBulk &&
-					( ! action.isEligible || action.isEligible( item ) )
-			);
-		} );
-	}, [ data, actions ] );
-	const selectedItems = data.filter(
-		( item ) =>
-			selection.includes( getItemId( item ) ) &&
-			selectableItems.includes( item )
-	);
-	const areAllSelected = selectedItems.length === selectableItems.length;
-	return (
-		<CheckboxControl
-			className="dataviews-view-table-selection-checkbox"
-			__nextHasNoMarginBottom
-			checked={ areAllSelected }
-			indeterminate={ ! areAllSelected && !! selectedItems.length }
-			onChange={ () => {
-				if ( areAllSelected ) {
-					onChangeSelection( [] );
-				} else {
-					onChangeSelection(
-						selectableItems.map( ( item ) => getItemId( item ) )
-					);
-				}
-			} }
-			aria-label={
-				areAllSelected ? __( 'Deselect all' ) : __( 'Select all' )
-			}
-		/>
-	);
+	isItemClickable: ( item: Item ) => boolean;
+	onClickItem: ( item: Item ) => void;
 }
 
 function TableColumn< Item >( {
@@ -159,15 +111,29 @@ function TableColumnField< Item >( {
 	primaryField,
 	item,
 	field,
+	isItemClickable,
+	onClickItem,
 }: TableColumnFieldProps< Item > ) {
+	const isPrimaryField = primaryField?.id === field.id;
+	const isItemClickableField = ( i: Item ) =>
+		isItemClickable( i ) && isPrimaryField;
+
+	const clickableProps = getClickableItemProps(
+		item,
+		isItemClickableField,
+		onClickItem,
+		'dataviews-view-table__cell-content'
+	);
+
 	return (
 		<div
 			className={ clsx( 'dataviews-view-table__cell-content-wrapper', {
-				'dataviews-view-table__primary-field':
-					primaryField?.id === field.id,
+				'dataviews-view-table__primary-field': isPrimaryField,
 			} ) }
 		>
-			<field.render { ...{ item } } />
+			<div { ...clickableProps }>
+				<field.render { ...{ item } } />
+			</div>
 		</div>
 	);
 }
@@ -196,6 +162,8 @@ function TableRow< Item >( {
 	primaryField,
 	selection,
 	getItemId,
+	isItemClickable,
+	onClickItem,
 	onChangeSelection,
 }: TableRowProps< Item > ) {
 	const hasPossibleBulkAction = useHasAPossibleBulkAction( actions, item );
@@ -212,8 +180,8 @@ function TableRow< Item >( {
 	// Will be set to true if `onTouchStart` fires. This happens before
 	// `onClick` and can be used to exclude touchscreen devices from certain
 	// behaviours.
-	const isTouchDevice = useRef( false );
-	const columns = view.fields || fields.map( ( f ) => f.id );
+	const isTouchDeviceRef = useRef( false );
+	const columns = getVisibleFieldIds( view, fields );
 
 	return (
 		<tr
@@ -225,14 +193,14 @@ function TableRow< Item >( {
 			onMouseEnter={ handleMouseEnter }
 			onMouseLeave={ handleMouseLeave }
 			onTouchStart={ () => {
-				isTouchDevice.current = true;
+				isTouchDeviceRef.current = true;
 			} }
 			onClick={ () => {
 				if ( ! hasPossibleBulkAction ) {
 					return;
 				}
 				if (
-					! isTouchDevice.current &&
+					! isTouchDeviceRef.current &&
 					document.getSelection()?.type !== 'Range'
 				) {
 					onChangeSelection(
@@ -271,6 +239,8 @@ function TableRow< Item >( {
 					<td key={ column } style={ { width, maxWidth, minWidth } }>
 						<TableColumn
 							primaryField={ primaryField }
+							isItemClickable={ isItemClickable }
+							onClickItem={ onClickItem }
 							fields={ fields }
 							item={ item }
 							column={ column }
@@ -309,6 +279,8 @@ function ViewTable< Item >( {
 	onChangeSelection,
 	selection,
 	setOpenedFilter,
+	onClickItem,
+	isItemClickable,
 	view,
 }: ViewTableProps< Item > ) {
 	const headerMenuRefs = useRef<
@@ -346,7 +318,7 @@ function ViewTable< Item >( {
 		setNextHeaderMenuToFocus( fallback?.node );
 	};
 
-	const columns = view.fields || fields.map( ( f ) => f.id );
+	const columns = getVisibleFieldIds( view, fields );
 	const hasData = !! data?.length;
 
 	const primaryField = fields.find(
@@ -449,6 +421,8 @@ function ViewTable< Item >( {
 								selection={ selection }
 								getItemId={ getItemId }
 								onChangeSelection={ onChangeSelection }
+								onClickItem={ onClickItem }
+								isItemClickable={ isItemClickable }
 							/>
 						) ) }
 				</tbody>

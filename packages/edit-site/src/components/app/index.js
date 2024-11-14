@@ -18,21 +18,18 @@ import { privateApis as routerPrivateApis } from '@wordpress/router';
 import Layout from '../layout';
 import { unlock } from '../../lock-unlock';
 import { useCommonCommands } from '../../hooks/commands/use-common-commands';
-import { useEditModeCommands } from '../../hooks/commands/use-edit-mode-commands';
-import useInitEditedEntityFromURL from '../sync-state-with-url/use-init-edited-entity-from-url';
-import useLayoutAreas from '../layout/router';
+import useActiveRoute from '../layout/router';
 import useSetCommandContext from '../../hooks/commands/use-set-command-context';
+import { useRegisterSiteEditorRoutes } from '../site-editor-routes';
 
 const { RouterProvider } = unlock( routerPrivateApis );
 const { GlobalStylesProvider } = unlock( editorPrivateApis );
 
 function AppLayout() {
-	// This ensures the edited entity id and type are initialized properly.
-	useInitEditedEntityFromURL();
-	useEditModeCommands();
 	useCommonCommands();
 	useSetCommandContext();
-	const route = useLayoutAreas();
+	useRegisterSiteEditorRoutes();
+	const route = useActiveRoute();
 
 	return <Layout route={ route } />;
 }

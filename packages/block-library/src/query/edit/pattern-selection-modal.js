@@ -4,7 +4,6 @@
 import { useState, useMemo } from '@wordpress/element';
 import { useDispatch } from '@wordpress/data';
 import { Modal, SearchControl } from '@wordpress/components';
-import { useAsyncList } from '@wordpress/compose';
 import {
 	BlockContextProvider,
 	store as blockEditorStore,
@@ -55,7 +54,6 @@ export default function PatternSelectionModal( {
 	const filteredBlockPatterns = useMemo( () => {
 		return searchPatterns( blockPatterns, searchValue );
 	}, [ blockPatterns, searchValue ] );
-	const shownBlockPatterns = useAsyncList( filteredBlockPatterns );
 
 	return (
 		<Modal
@@ -70,14 +68,13 @@ export default function PatternSelectionModal( {
 						__nextHasNoMarginBottom
 						onChange={ setSearchValue }
 						value={ searchValue }
-						label={ __( 'Search for patterns' ) }
+						label={ __( 'Search' ) }
 						placeholder={ __( 'Search' ) }
 					/>
 				</div>
 				<BlockContextProvider value={ blockPreviewContext }>
 					<BlockPatternsList
 						blockPatterns={ filteredBlockPatterns }
-						shownPatterns={ shownBlockPatterns }
 						onClickPattern={ onBlockPatternSelect }
 					/>
 				</BlockContextProvider>

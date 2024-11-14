@@ -2,7 +2,7 @@
  * WordPress dependencies
  */
 import { store as coreStore } from '@wordpress/core-data';
-import { __, sprintf } from '@wordpress/i18n';
+import { __, _x, sprintf } from '@wordpress/i18n';
 import { store as noticesStore } from '@wordpress/notices';
 import { store as blockEditorStore } from '@wordpress/block-editor';
 import { store as preferencesStore } from '@wordpress/preferences';
@@ -137,7 +137,9 @@ export const saveDirtyEntities =
 			{ kind: 'postType', name: 'wp_navigation' },
 		];
 		const saveNoticeId = 'site-editor-save-success';
-		const homeUrl = registry.select( coreStore ).getUnstableBase()?.home;
+		const homeUrl = registry
+			.select( coreStore )
+			.getEntityRecord( 'root', '__unstableBase' )?.home;
 		registry.dispatch( noticesStore ).removeNotice( saveNoticeId );
 		const entitiesToSave = dirtyEntityRecords.filter(
 			( { kind, name, key, property } ) => {
@@ -408,8 +410,8 @@ export const removeTemplates =
 							decodeEntities( title )
 					  )
 					: sprintf(
-							/* translators: The template/part's name. */
-							__( '"%s" deleted.' ),
+							/* translators: %s: The template/part's name. */
+							_x( '"%s" deleted.', 'template part' ),
 							decodeEntities( title )
 					  );
 			} else {

@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies
  */
-import { __, sprintf } from '@wordpress/i18n';
+import { __, _x, sprintf } from '@wordpress/i18n';
 import {
 	NavigableMenu,
 	MenuItem,
@@ -58,11 +58,12 @@ function TrackList( { tracks, onEditPress } ) {
 				>
 					<span>{ track.label } </span>
 					<Button
+						__next40pxDefaultSize
 						variant="tertiary"
 						onClick={ () => onEditPress( index ) }
 						aria-label={ sprintf(
 							/* translators: %s: Label of the video text track e.g: "French subtitles" */
-							__( 'Edit %s' ),
+							_x( 'Edit %s', 'text tracks' ),
 							track.label
 						) }
 					>
@@ -145,6 +146,7 @@ function SingleTrackEditor( { track, onChange, onClose, onRemove } ) {
 					/>
 					<HStack className="block-library-video-tracks-editor__single-track-editor-buttons-container">
 						<Button
+							__next40pxDefaultSize
 							variant="secondary"
 							onClick={ () => {
 								const changes = {};
@@ -173,6 +175,7 @@ function SingleTrackEditor( { track, onChange, onClose, onRemove } ) {
 							{ __( 'Close' ) }
 						</Button>
 						<Button
+							__next40pxDefaultSize
 							isDestructive
 							variant="link"
 							onClick={ onRemove }
@@ -201,8 +204,6 @@ export default function TracksEditor( { tracks = [], onChange } ) {
 			renderToggle={ ( { isOpen, onToggle } ) => (
 				<ToolbarGroup>
 					<ToolbarButton
-						label={ __( 'Text tracks' ) }
-						showTooltip
 						aria-expanded={ isOpen }
 						aria-haspopup="true"
 						onClick={ onToggle }

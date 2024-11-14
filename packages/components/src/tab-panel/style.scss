@@ -7,12 +7,10 @@
 	}
 }
 
-// This tab style CSS is duplicated verbatim in
-// /packages/edit-post/src/components/sidebar/settings-header/style.scss
 .components-tab-panel__tabs-item {
 	position: relative;
 	border-radius: 0;
-	height: $grid-unit-60;
+	height: $grid-unit-60 !important; // https://github.com/WordPress/gutenberg/pull/65075#discussion_r1746282734
 	background: transparent;
 	border: none;
 	box-shadow: none;
@@ -89,7 +87,6 @@
 	}
 
 	&:focus-visible {
-		border-radius: 2px;
 		box-shadow: 0 0 0 var(--wp-admin-border-width-focus) $components-color-accent;
 
 		// Windows high contrast mode.

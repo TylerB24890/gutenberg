@@ -52,7 +52,6 @@ const noop = () => {};
  */
 const NON_CONTEXTUAL_POST_TYPES = [
 	'wp_block',
-	'wp_template',
 	'wp_navigation',
 	'wp_template_part',
 ];
@@ -165,34 +164,64 @@ export const ExperimentalEditorProvider = withRegistryProvider(
 		BlockEditorProviderComponent = ExperimentalBlockEditorProvider,
 		__unstableTemplate: template,
 	} ) => {
-		const { editorSettings, selection, isReady, mode } = useSelect(
-			( select ) => {
-				const {
-					getEditorSettings,
-					getEditorSelection,
-					__unstableIsEditorReady,
-				} = select( editorStore );
+		const { editorSettings, selection, isReady, mode, postTypeEntities } =
+			useSelect(
+				( select ) => {
+					const {
+						getEditorSettings,
+						getEditorSelection,
+						__unstableIsEditorReady,
+					} = select( editorStore );
+					const { getEntitiesConfig } = select( coreStore );
 
-				const postTypeObject = select( coreStore ).getPostType(
-					post.type
-				);
-				return {
-					editorSettings: getEditorSettings(),
-					isReady: __unstableIsEditorReady(),
-					selection: getEditorSelection(),
-					mode: postTypeObject?.default_rendering_mode ?? 'post-only',
-				};
-			},
-			[ post.type ]
-		);
+					const postTypeObject = select( coreStore ).getPostType(
+						post.type
+					);
+
+					return {
+						editorSettings: getEditorSettings(),
+						isReady: __unstableIsEditorReady(),
+						mode:
+							postTypeObject?.default_rendering_mode ??
+							'post-only',
+						selection: getEditorSelection(),
+						postTypeEntities:
+							post.type === 'wp_template'
+								? getEntitiesConfig( 'postType' )
+								: null,
+					};
+				},
+				[ post.type ]
+			);
 		const shouldRenderTemplate = !! template && mode !== 'post-only';
 		const rootLevelPost = shouldRenderTemplate ? template : post;
 		const defaultBlockContext = useMemo( () => {
-			const postContext =
+			const postContext = {};
+			// If it is a template, try to inherit the post type from the name.
+			if ( post.type === 'wp_template' ) {
+				if ( post.slug === 'page' ) {
+					postContext.postType = 'page';
+				} else if ( post.slug === 'single' ) {
+					postContext.postType = 'post';
+				} else if ( post.slug.split( '-' )[ 0 ] === 'single' ) {
+					// If the slug is single-{postType}, infer the post type from the name.
+					const postTypeNames =
+						postTypeEntities?.map( ( entity ) => entity.name ) ||
+						[];
+					const match = post.slug.match(
+						`^single-(${ postTypeNames.join( '|' ) })(?:-.+)?$`
+					);
+					if ( match ) {
+						postContext.postType = match[ 1 ];
+					}
+				}
+			} else if (
 				! NON_CONTEXTUAL_POST_TYPES.includes( rootLevelPost.type ) ||
 				shouldRenderTemplate
-					? { postId: post.id, postType: post.type }
-					: {};
+			) {
+				postContext.postId = post.id;
+				postContext.postType = post.type;
+			}
 
 			return {
 				...postContext,
@@ -205,8 +234,10 @@ export const ExperimentalEditorProvider = withRegistryProvider(
 			shouldRenderTemplate,
 			post.id,
 			post.type,
+			post.slug,
 			rootLevelPost.type,
 			rootLevelPost.slug,
+			postTypeEntities,
 		] );
 		const { id, type } = rootLevelPost;
 		const blockEditorSettings = useBlockEditorSettings(
@@ -312,7 +343,7 @@ export const ExperimentalEditorProvider = withRegistryProvider(
 							useSubRegistry={ false }
 						>
 							{ children }
-							{ ! settings.__unstableIsPreviewMode && (
+							{ ! settings.isPreviewMode && (
 								<>
 									<PatternsMenuItems />
 									<TemplatePartMenuItems />

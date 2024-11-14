@@ -131,8 +131,18 @@ export function EntitiesSavedStatesExtensible( {
 				<FlexItem
 					isBlock
 					as={ Button }
+					variant="secondary"
+					size="compact"
+					onClick={ dismissPanel }
+				>
+					{ __( 'Cancel' ) }
+				</FlexItem>
+				<FlexItem
+					isBlock
+					as={ Button }
 					ref={ saveButtonRef }
 					variant="primary"
+					size="compact"
 					disabled={ ! saveEnabled }
 					accessibleWhenDisabled
 					onClick={ () =>
@@ -146,14 +156,6 @@ export function EntitiesSavedStatesExtensible( {
 					className="editor-entities-saved-states__save-button"
 				>
 					{ saveLabel }
-				</FlexItem>
-				<FlexItem
-					isBlock
-					as={ Button }
-					variant="secondary"
-					onClick={ dismissPanel }
-				>
-					{ __( 'Cancel' ) }
 				</FlexItem>
 			</Flex>
 
@@ -175,9 +177,9 @@ export function EntitiesSavedStatesExtensible( {
 									_n(
 										'There is <strong>%d site change</strong> waiting to be saved.',
 										'There are <strong>%d site changes</strong> waiting to be saved.',
-										sortedPartitionedSavables.length
+										dirtyEntityRecords.length
 									),
-									sortedPartitionedSavables.length
+									dirtyEntityRecords.length
 								),
 								{ strong: <strong /> }
 						  )

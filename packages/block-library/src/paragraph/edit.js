@@ -66,7 +66,7 @@ function DropCapControl( { clientId, attributes, setAttributes } ) {
 	} else if ( dropCap ) {
 		helpText = __( 'Showing large initial letter.' );
 	} else {
-		helpText = __( 'Toggle to show a large initial letter.' );
+		helpText = __( 'Show a large initial letter.' );
 	}
 
 	return (
@@ -83,7 +83,7 @@ function DropCapControl( { clientId, attributes, setAttributes } ) {
 				checked={ !! dropCap }
 				onChange={ () => setAttributes( { dropCap: ! dropCap } ) }
 				help={ helpText }
-				disabled={ hasDropCapDisabled( align ) ? true : false }
+				disabled={ hasDropCapDisabled( align ) }
 			/>
 		</ToolsPanelItem>
 	);

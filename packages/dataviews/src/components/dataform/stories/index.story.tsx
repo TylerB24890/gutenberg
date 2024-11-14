@@ -7,6 +7,18 @@ import { useState } from '@wordpress/element';
  * Internal dependencies
  */
 import DataForm from '../index';
+import type { CombinedFormField, Field } from '../../../types';
+
+type SamplePost = {
+	title: string;
+	order: number;
+	author: number;
+	status: string;
+	reviewer: string;
+	date: string;
+	birthdate: string;
+	password?: string;
+};
 
 const meta = {
 	title: 'DataViews/DataForm',
@@ -74,9 +86,18 @@ const fields = [
 		elements: [
 			{ value: 'draft', label: 'Draft' },
 			{ value: 'published', label: 'Published' },
+			{ value: 'private', label: 'Private' },
 		],
 	},
-];
+	{
+		id: 'password',
+		label: 'Password',
+		type: 'text' as const,
+		isVisible: ( item: SamplePost ) => {
+			return item.status !== 'private';
+		},
+	},
+] as Field< SamplePost >[];
 
 export const Default = ( { type }: { type: 'panel' | 'regular' } ) => {
 	const [ post, setPost ] = useState( {
@@ -96,9 +117,55 @@ export const Default = ( { type }: { type: 'panel' | 'regular' } ) => {
 			'author',
 			'reviewer',
 			'status',
+			'password',
 			'date',
 			'birthdate',
 		],
+	};
+
+	return (
+		<DataForm< SamplePost >
+			data={ post }
+			fields={ fields }
+			form={ {
+				...form,
+				type,
+			} }
+			onChange={ ( edits ) =>
+				setPost( ( prev ) => ( {
+					...prev,
+					...edits,
+				} ) )
+			}
+		/>
+	);
+};
+
+const CombinedFieldsComponent = ( {
+	type = 'regular',
+	combinedFieldDirection = 'vertical',
+}: {
+	type: 'panel' | 'regular';
+	combinedFieldDirection: 'vertical' | 'horizontal';
+} ) => {
+	const [ post, setPost ] = useState( {
+		title: 'Hello, World!',
+		order: 2,
+		author: 1,
+		status: 'draft',
+	} );
+
+	const form = {
+		fields: [ 'title', 'status_and_visibility', 'order', 'author' ],
+		combinedFields: [
+			{
+				id: 'status_and_visibility',
+				label: 'Status & Visibility',
+				children: [ 'status', 'password' ],
+				direction: combinedFieldDirection,
+				render: ( { item } ) => item.status,
+			},
+		] as CombinedFormField< any >[],
 	};
 
 	return (
@@ -117,4 +184,18 @@ export const Default = ( { type }: { type: 'panel' | 'regular' } ) => {
 			}
 		/>
 	);
+};
+
+export const CombinedFields = {
+	title: 'DataViews/CombinedFields',
+	render: CombinedFieldsComponent,
+	argTypes: {
+		...meta.argTypes,
+		combinedFieldDirection: {
+			control: { type: 'select' },
+			description:
+				'Chooses the direction of the combined field. "vertical" is the default layout.',
+			options: [ 'vertical', 'horizontal' ],
+		},
+	},
 };

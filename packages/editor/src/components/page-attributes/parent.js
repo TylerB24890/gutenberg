@@ -212,8 +212,10 @@ function PostParentToggle( { isOpen, onClick } ) {
 			className="editor-post-parent__panel-toggle"
 			variant="tertiary"
 			aria-expanded={ isOpen }
-			// translators: %s: Current post parent.
-			aria-label={ sprintf( __( 'Change parent: %s' ), parentTitle ) }
+			aria-label={
+				// translators: %s: Current post parent.
+				sprintf( __( 'Change parent: %s' ), parentTitle )
+			}
 			onClick={ onClick }
 		>
 			{ parentTitle }
@@ -222,10 +224,11 @@ function PostParentToggle( { isOpen, onClick } ) {
 }
 
 export function ParentRow() {
-	const homeUrl = useSelect(
-		( select ) => select( coreStore ).getUnstableBase()?.home,
-		[]
-	);
+	const homeUrl = useSelect( ( select ) => {
+		// Site index.
+		return select( coreStore ).getEntityRecord( 'root', '__unstableBase' )
+			?.home;
+	}, [] );
 	// Use internal state instead of a ref to make sure that the component
 	// re-renders when the popover's anchor updates.
 	const [ popoverAnchor, setPopoverAnchor ] = useState( null );
@@ -260,9 +263,9 @@ export function ParentRow() {
 						<div>
 							{ createInterpolateElement(
 								sprintf(
-									/* translators: %1$s The home URL of the WordPress installation without the scheme. */
+									/* translators: %s: The home URL of the WordPress installation without the scheme. */
 									__(
-										'Child pages inherit characteristics from their parent, such as URL structure. For instance, if "Pricing" is a child of "Services", its URL would be %1$s<wbr />/services<wbr />/pricing.'
+										'Child pages inherit characteristics from their parent, such as URL structure. For instance, if "Pricing" is a child of "Services", its URL would be %s<wbr />/services<wbr />/pricing.'
 									),
 									filterURLForDisplay( homeUrl ).replace(
 										/([/.])/g,
@@ -274,16 +277,20 @@ export function ParentRow() {
 								}
 							) }
 							<p>
-								{ __(
-									'They also show up as sub-items in the default navigation menu. '
+								{ createInterpolateElement(
+									__(
+										'They also show up as sub-items in the default navigation menu. <a>Learn more.</a>'
+									),
+									{
+										a: (
+											<ExternalLink
+												href={ __(
+													'https://wordpress.org/documentation/article/page-post-settings-sidebar/#page-attributes'
+												) }
+											/>
+										),
+									}
 								) }
-								<ExternalLink
-									href={ __(
-										'https://wordpress.org/documentation/article/page-post-settings-sidebar/#page-attributes'
-									) }
-								>
-									{ __( 'Learn more' ) }
-								</ExternalLink>
 							</p>
 						</div>
 						<PageAttributesParent />

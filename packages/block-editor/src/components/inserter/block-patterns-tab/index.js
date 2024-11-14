@@ -61,6 +61,7 @@ function BlockPatternsTab( {
 						{ children }
 					</CategoryTabs>
 					<Button
+						__next40pxDefaultSize
 						className="block-editor-inserter__patterns-explore-button"
 						onClick={ () => setShowPatternsExplorer( true ) }
 						variant="secondary"
@@ -78,7 +79,6 @@ function BlockPatternsTab( {
 								onInsert={ onInsert }
 								rootClientId={ rootClientId }
 								category={ category }
-								showTitlesAsTooltip={ false }
 							/>
 						</div>
 					) }

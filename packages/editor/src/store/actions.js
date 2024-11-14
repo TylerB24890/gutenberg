@@ -12,7 +12,11 @@ import {
 import { store as noticesStore } from '@wordpress/notices';
 import { store as coreStore } from '@wordpress/core-data';
 import { store as blockEditorStore } from '@wordpress/block-editor';
-import { applyFilters } from '@wordpress/hooks';
+import {
+	applyFilters,
+	applyFiltersAsync,
+	doActionAsync,
+} from '@wordpress/hooks';
 import { store as preferencesStore } from '@wordpress/preferences';
 import { __ } from '@wordpress/i18n';
 
@@ -26,7 +30,7 @@ import {
 	getNotificationArgumentsForSaveFail,
 	getNotificationArgumentsForTrashFail,
 } from './utils/notice-builder';
-
+import { unlock } from '../lock-unlock';
 /**
  * Returns an action generator used in signalling that editor has initialized with
  * the specified post object and editor settings.
@@ -155,6 +159,29 @@ export function setEditedPost( postType, postId ) {
  *
  * @param {Object} edits   Post attributes to edit.
  * @param {Object} options Options for the edit.
+ *
+ * @example
+ * ```js
+ * // Update the post title
+ * wp.data.dispatch( 'core/editor' ).editPost( { title: `${ newTitle }` } );
+ * ```
+ *
+ * @example
+ *```js
+ * 	// Get specific media size based on the featured media ID
+ * 	// Note: change sizes?.large for any registered size
+ * 	const getFeaturedMediaUrl = useSelect( ( select ) => {
+ * 		const getFeaturedMediaId =
+ * 			select( 'core/editor' ).getEditedPostAttribute( 'featured_media' );
+ * 		const getMedia = select( 'core' ).getMedia( getFeaturedMediaId );
+ *
+ * 		return (
+ * 			getMedia?.media_details?.sizes?.large?.source_url || getMedia?.source_url || ''
+ * 		);
+ * }, [] );
+ * ```
+ *
+ * @return {Object} Action object
  */
 export const editPost =
 	( edits, options ) =>
@@ -184,7 +211,7 @@ export const savePost =
 		}
 
 		const previousRecord = select.getCurrentPost();
-		const edits = {
+		let edits = {
 			id: previousRecord.id,
 			...registry
 				.select( coreStore )
@@ -199,9 +226,9 @@ export const savePost =
 
 		let error = false;
 		try {
-			error = await applyFilters(
-				'editor.__unstablePreSavePost',
-				Promise.resolve( false ),
+			edits = await applyFiltersAsync(
+				'editor.preSavePost',
+				edits,
 				options
 			);
 		} catch ( err ) {
@@ -236,14 +263,29 @@ export const savePost =
 				);
 		}
 
+		// Run the hook with legacy unstable name for backward compatibility
 		if ( ! error ) {
-			await applyFilters(
-				'editor.__unstableSavePost',
-				Promise.resolve(),
-				options
-			).catch( ( err ) => {
+			try {
+				await applyFilters(
+					'editor.__unstableSavePost',
+					Promise.resolve(),
+					options
+				);
+			} catch ( err ) {
 				error = err;
-			} );
+			}
+		}
+
+		if ( ! error ) {
+			try {
+				await doActionAsync(
+					'editor.savePost',
+					{ id: previousRecord.id },
+					options
+				);
+			} catch ( err ) {
+				error = err;
+			}
 		}
 		dispatch( { type: 'REQUEST_POST_UPDATE_FINISH', options } );
 
@@ -726,15 +768,32 @@ export function removeEditorPanel( panelName ) {
  *                                              use an object.
  * @param {string}         value.rootClientId   The root client ID to insert at.
  * @param {number}         value.insertionIndex The index to insert at.
+ * @param {string}         value.filterValue    A query to filter the inserter results.
+ * @param {Function}       value.onSelect       A callback when an item is selected.
+ * @param {string}         value.tab            The tab to open in the inserter.
+ * @param {string}         value.category       The category to initialize in the inserter.
  *
  * @return {Object} Action object.
  */
-export function setIsInserterOpened( value ) {
-	return {
-		type: 'SET_IS_INSERTER_OPENED',
-		value,
+export const setIsInserterOpened =
+	( value ) =>
+	( { dispatch, registry } ) => {
+		if (
+			typeof value === 'object' &&
+			value.hasOwnProperty( 'rootClientId' ) &&
+			value.hasOwnProperty( 'insertionIndex' )
+		) {
+			unlock( registry.dispatch( blockEditorStore ) ).setInsertionPoint( {
+				rootClientId: value.rootClientId,
+				index: value.insertionIndex,
+			} );
+		}
+
+		dispatch( {
+			type: 'SET_IS_INSERTER_OPENED',
+			value,
+		} );
 	};
-}
 
 /**
  * Returns an action object used to open/close the list view.
@@ -753,9 +812,12 @@ export function setIsListViewOpened( isOpen ) {
  * Action that toggles Distraction free mode.
  * Distraction free mode expects there are no sidebars, as due to the
  * z-index values set, you can't close sidebars.
+ *
+ * @param {Object}  [options={}]                Optional configuration object
+ * @param {boolean} [options.createNotice=true] Whether to create a notice
  */
 export const toggleDistractionFree =
-	() =>
+	( { createNotice = true } = {} ) =>
 	( { dispatch, registry } ) => {
 		const isDistractionFree = registry
 			.select( preferencesStore )
@@ -778,40 +840,114 @@ export const toggleDistractionFree =
 			registry
 				.dispatch( preferencesStore )
 				.set( 'core', 'distractionFree', ! isDistractionFree );
-			registry
-				.dispatch( noticesStore )
-				.createInfoNotice(
-					isDistractionFree
-						? __( 'Distraction free off.' )
-						: __( 'Distraction free on.' ),
-					{
-						id: 'core/editor/distraction-free-mode/notice',
-						type: 'snackbar',
-						actions: [
-							{
-								label: __( 'Undo' ),
-								onClick: () => {
-									registry.batch( () => {
-										registry
-											.dispatch( preferencesStore )
-											.set(
-												'core',
-												'fixedToolbar',
-												isDistractionFree ? true : false
-											);
-										registry
-											.dispatch( preferencesStore )
-											.toggle(
-												'core',
-												'distractionFree'
-											);
-									} );
+
+			if ( createNotice ) {
+				registry
+					.dispatch( noticesStore )
+					.createInfoNotice(
+						isDistractionFree
+							? __( 'Distraction free mode deactivated.' )
+							: __( 'Distraction free mode activated.' ),
+						{
+							id: 'core/editor/distraction-free-mode/notice',
+							type: 'snackbar',
+							actions: [
+								{
+									label: __( 'Undo' ),
+									onClick: () => {
+										registry.batch( () => {
+											registry
+												.dispatch( preferencesStore )
+												.set(
+													'core',
+													'fixedToolbar',
+													isDistractionFree
+												);
+											registry
+												.dispatch( preferencesStore )
+												.toggle(
+													'core',
+													'distractionFree'
+												);
+										} );
+									},
 								},
-							},
-						],
-					}
-				);
+							],
+						}
+					);
+			}
 		} );
+	};
+
+/**
+ * Action that toggles the Spotlight Mode view option.
+ */
+export const toggleSpotlightMode =
+	() =>
+	( { registry } ) => {
+		registry.dispatch( preferencesStore ).toggle( 'core', 'focusMode' );
+
+		const isFocusMode = registry
+			.select( preferencesStore )
+			.get( 'core', 'focusMode' );
+
+		registry
+			.dispatch( noticesStore )
+			.createInfoNotice(
+				isFocusMode
+					? __( 'Spotlight mode activated.' )
+					: __( 'Spotlight mode deactivated.' ),
+				{
+					id: 'core/editor/toggle-spotlight-mode/notice',
+					type: 'snackbar',
+					actions: [
+						{
+							label: __( 'Undo' ),
+							onClick: () => {
+								registry
+									.dispatch( preferencesStore )
+									.toggle( 'core', 'focusMode' );
+							},
+						},
+					],
+				}
+			);
+	};
+
+/**
+ * Action that toggles the Top Toolbar view option.
+ */
+export const toggleTopToolbar =
+	() =>
+	( { registry } ) => {
+		registry.dispatch( preferencesStore ).toggle( 'core', 'fixedToolbar' );
+
+		const isTopToolbar = registry
+			.select( preferencesStore )
+			.get( 'core', 'fixedToolbar' );
+
+		registry
+			.dispatch( noticesStore )
+			.createInfoNotice(
+				isTopToolbar
+					? __( 'Top toolbar activated.' )
+					: __( 'Top toolbar deactivated.' ),
+				{
+					id: 'core/editor/toggle-top-toolbar/notice',
+					type: 'snackbar',
+					actions: [
+						{
+							label: __( 'Undo' ),
+
+							onClick: () => {
+								registry
+									.dispatch( preferencesStore )
+									.toggle( 'core', 'fixedToolbar' );
+							},
+						},
+					],
+				}
+			);
 	};
 
 /**
@@ -824,9 +960,11 @@ export const switchEditorMode =
 	( { dispatch, registry } ) => {
 		registry.dispatch( preferencesStore ).set( 'core', 'editorMode', mode );
 
-		// Unselect blocks when we switch to a non visual mode.
 		if ( mode !== 'visual' ) {
+			// Unselect blocks when we switch to a non visual mode.
 			registry.dispatch( blockEditorStore ).clearSelectedBlock();
+			// Exit zoom out state when switching to a non visual mode.
+			unlock( registry.dispatch( blockEditorStore ) ).resetZoomLevel();
 		}
 
 		if ( mode === 'visual' ) {

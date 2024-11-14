@@ -7,6 +7,8 @@
 	container: dataviews-wrapper / inline-size;
 	display: flex;
 	flex-direction: column;
+	font-size: $default-font-size;
+	line-height: $default-line-height;
 }
 
 .dataviews__view-actions,
@@ -17,13 +19,7 @@
 	position: sticky;
 	left: 0;
 	transition: padding ease-out 0.1s;
-	@include reduce-motion("transition");
-
-	.components-search-control {
-		.components-base-control__field {
-			max-width: 240px;
-		}
-	}
+	@include reduce-motion( "transition" );
 }
 
 .dataviews-view-list__primary-field,
@@ -66,6 +62,13 @@
 	}
 }
 
+.dataviews-view-list__primary-field--clickable,
+.dataviews-view-grid__primary-field--clickable,
+.dataviews-view-grid__media--clickable,
+.dataviews-view-table__primary-field > .dataviews-view-table__cell-content--clickable {
+	cursor: pointer;
+}
+
 .dataviews-no-results,
 .dataviews-loading {
 	padding: 0 $grid-unit-60;
@@ -74,7 +77,7 @@
 	align-items: center;
 	justify-content: center;
 	transition: padding ease-out 0.1s;
-	@include reduce-motion("transition");
+	@include reduce-motion( "transition" );
 }
 
 /* stylelint-disable-next-line scss/at-rule-no-unknown -- '@container' not globally permitted */
@@ -82,19 +85,11 @@
 	.dataviews__view-actions,
 	.dataviews-filters__container {
 		padding: $grid-unit-15 $grid-unit-30;
-
-		.components-search-control {
-			.components-base-control__field {
-				max-width: 112px;
-			}
-		}
 	}
 
-	.dataviews-view-grid,
 	.dataviews-no-results,
 	.dataviews-loading {
 		padding-left: $grid-unit-30;
 		padding-right: $grid-unit-30;
 	}
 }
-

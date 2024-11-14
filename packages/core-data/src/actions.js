@@ -16,7 +16,7 @@ import deprecated from '@wordpress/deprecated';
  */
 import { getNestedValue, setNestedValue } from './utils';
 import { receiveItems, removeItems, receiveQueriedItems } from './queried-data';
-import { getOrLoadEntitiesConfig, DEFAULT_ENTITY_KEY } from './entities';
+import { DEFAULT_ENTITY_KEY } from './entities';
 import { createBatch } from './batch';
 import { STORE_NAME } from './name';
 import { getSyncProvider } from './sync';
@@ -265,17 +265,17 @@ export function receiveEmbedPreview( url, preview ) {
 /**
  * Action triggered to delete an entity record.
  *
- * @param {string}   kind                         Kind of the deleted entity.
- * @param {string}   name                         Name of the deleted entity.
- * @param {string}   recordId                     Record ID of the deleted entity.
- * @param {?Object}  query                        Special query parameters for the
- *                                                DELETE API call.
- * @param {Object}   [options]                    Delete options.
- * @param {Function} [options.__unstableFetch]    Internal use only. Function to
- *                                                call instead of `apiFetch()`.
- *                                                Must return a promise.
- * @param {boolean}  [options.throwOnError=false] If false, this action suppresses all
- *                                                the exceptions. Defaults to false.
+ * @param {string}        kind                         Kind of the deleted entity.
+ * @param {string}        name                         Name of the deleted entity.
+ * @param {number|string} recordId                     Record ID of the deleted entity.
+ * @param {?Object}       query                        Special query parameters for the
+ *                                                     DELETE API call.
+ * @param {Object}        [options]                    Delete options.
+ * @param {Function}      [options.__unstableFetch]    Internal use only. Function to
+ *                                                     call instead of `apiFetch()`.
+ *                                                     Must return a promise.
+ * @param {boolean}       [options.throwOnError=false] If false, this action suppresses all
+ *                                                     the exceptions. Defaults to false.
  */
 export const deleteEntityRecord =
 	(
@@ -285,8 +285,8 @@ export const deleteEntityRecord =
 		query,
 		{ __unstableFetch = apiFetch, throwOnError = false } = {}
 	) =>
-	async ( { dispatch } ) => {
-		const configs = await dispatch( getOrLoadEntitiesConfig( kind, name ) );
+	async ( { dispatch, resolveSelect } ) => {
+		const configs = await resolveSelect.getEntitiesConfig( kind );
 		const entityConfig = configs.find(
 			( config ) => config.kind === kind && config.name === name
 		);
@@ -503,7 +503,7 @@ export const saveEntityRecord =
 		} = {}
 	) =>
 	async ( { select, resolveSelect, dispatch } ) => {
-		const configs = await dispatch( getOrLoadEntitiesConfig( kind, name ) );
+		const configs = await resolveSelect.getEntitiesConfig( kind );
 		const entityConfig = configs.find(
 			( config ) => config.kind === kind && config.name === name
 		);
@@ -780,11 +780,11 @@ export const __experimentalBatch =
  */
 export const saveEditedEntityRecord =
 	( kind, name, recordId, options ) =>
-	async ( { select, dispatch } ) => {
+	async ( { select, dispatch, resolveSelect } ) => {
 		if ( ! select.hasEditsForEntityRecord( kind, name, recordId ) ) {
 			return;
 		}
-		const configs = await dispatch( getOrLoadEntitiesConfig( kind, name ) );
+		const configs = await resolveSelect.getEntitiesConfig( kind );
 		const entityConfig = configs.find(
 			( config ) => config.kind === kind && config.name === name
 		);
@@ -805,15 +805,15 @@ export const saveEditedEntityRecord =
 /**
  * Action triggered to save only specified properties for the entity.
  *
- * @param {string} kind        Kind of the entity.
- * @param {string} name        Name of the entity.
- * @param {Object} recordId    ID of the record.
- * @param {Array}  itemsToSave List of entity properties or property paths to save.
- * @param {Object} options     Saving options.
+ * @param {string}        kind        Kind of the entity.
+ * @param {string}        name        Name of the entity.
+ * @param {number|string} recordId    ID of the record.
+ * @param {Array}         itemsToSave List of entity properties or property paths to save.
+ * @param {Object}        options     Saving options.
  */
 export const __experimentalSaveSpecifiedEntityEdits =
 	( kind, name, recordId, itemsToSave, options ) =>
-	async ( { select, dispatch } ) => {
+	async ( { select, dispatch, resolveSelect } ) => {
 		if ( ! select.hasEditsForEntityRecord( kind, name, recordId ) ) {
 			return;
 		}
@@ -828,7 +828,7 @@ export const __experimentalSaveSpecifiedEntityEdits =
 			setNestedValue( editsToSave, item, getNestedValue( edits, item ) );
 		}
 
-		const configs = await dispatch( getOrLoadEntitiesConfig( kind, name ) );
+		const configs = await resolveSelect.getEntitiesConfig( kind );
 		const entityConfig = configs.find(
 			( config ) => config.kind === kind && config.name === name
 		);
@@ -885,6 +885,28 @@ export function receiveUserPermission( key, isAllowed ) {
 		type: 'RECEIVE_USER_PERMISSION',
 		key,
 		isAllowed,
+	};
+}
+
+/**
+ * Returns an action object used in signalling that the current user has
+ * permission to perform an action on a REST resource. Ignored from
+ * documentation as it's internal to the data store.
+ *
+ * @ignore
+ *
+ * @param {Object<string, boolean>} permissions An object where keys represent
+ *                                              actions and REST resources, and
+ *                                              values indicate whether the user
+ *                                              is allowed to perform the
+ *                                              action.
+ *
+ * @return {Object} Action object.
+ */
+export function receiveUserPermissions( permissions ) {
+	return {
+		type: 'RECEIVE_USER_PERMISSIONS',
+		permissions,
 	};
 }
 
@@ -951,8 +973,8 @@ export function receiveDefaultTemplateId( query, templateId ) {
  */
 export const receiveRevisions =
 	( kind, name, recordKey, records, query, invalidateCache = false, meta ) =>
-	async ( { dispatch } ) => {
-		const configs = await dispatch( getOrLoadEntitiesConfig( kind, name ) );
+	async ( { dispatch, resolveSelect } ) => {
+		const configs = await resolveSelect.getEntitiesConfig( kind );
 		const entityConfig = configs.find(
 			( config ) => config.kind === kind && config.name === name
 		);

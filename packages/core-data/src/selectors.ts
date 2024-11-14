@@ -47,6 +47,7 @@ export interface State {
 	navigationFallbackId: EntityRecordKey;
 	userPatternCategories: Array< UserPatternCategory >;
 	defaultTemplates: Record< string, string >;
+	registeredPostMeta: Record< string, Object >;
 }
 
 type EntityRecordKey = string | number;
@@ -1281,38 +1282,6 @@ export const hasFetchedAutosaves = createRegistrySelector(
  */
 export function getReferenceByDistinctEdits( state ) {
 	return state.editsReference;
-}
-
-/**
- * Retrieve the frontend template used for a given link.
- *
- * @param state Editor state.
- * @param link  Link.
- *
- * @return The template record.
- */
-export function __experimentalGetTemplateForLink(
-	state: State,
-	link: string
-): Optional< ET.Updatable< ET.WpTemplate > > | null | false {
-	const records = getEntityRecords< ET.WpTemplate >(
-		state,
-		'postType',
-		'wp_template',
-		{
-			'find-template': link,
-		}
-	);
-
-	if ( records?.length ) {
-		return getEditedEntityRecord< ET.WpTemplate >(
-			state,
-			'postType',
-			'wp_template',
-			records[ 0 ].id
-		);
-	}
-	return null;
 }
 
 /**

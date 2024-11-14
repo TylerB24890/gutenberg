@@ -8,6 +8,7 @@
 	"references": [
 		{ "path": "../a11y" },
 		{ "path": "../api-fetch" },
+		{ "path": "../block-serialization-default-parser" },
 		{ "path": "../blob" },
 		{ "path": "../components" },
 		{ "path": "../compose" },
@@ -17,6 +18,7 @@
 		{ "path": "../dom" },
 		{ "path": "../element" },
 		{ "path": "../escape-html" },
+		{ "path": "../priority-queue" },
 		{ "path": "../private-apis" },
 		{ "path": "../hooks" },
 		{ "path": "../html-entities" },

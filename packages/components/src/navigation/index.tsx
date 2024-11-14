@@ -93,10 +93,10 @@ export function Navigation( {
 	};
 
 	// Used to prevent the sliding animation on mount
-	const isMounted = useRef( false );
+	const isMountedRef = useRef( false );
 	useEffect( () => {
-		if ( ! isMounted.current ) {
-			isMounted.current = true;
+		if ( ! isMountedRef.current ) {
+			isMountedRef.current = true;
 		}
 	}, [] );
 
@@ -104,9 +104,8 @@ export function Navigation( {
 		if ( activeMenu !== menu ) {
 			setActiveMenu( activeMenu );
 		}
-		// Ignore exhaustive-deps here, as it would require either a larger refactor or some questionable workarounds.
+		// Not adding deps for now, as it would require either a larger refactor or some questionable workarounds.
 		// See https://github.com/WordPress/gutenberg/pull/41612 for context.
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ activeMenu ] );
 
 	const context = {
@@ -130,7 +129,7 @@ export function Navigation( {
 					animateClassName
 						? clsx( {
 								[ animateClassName ]:
-									isMounted.current && slideOrigin,
+									isMountedRef.current && slideOrigin,
 						  } )
 						: undefined
 				}
