@@ -15,8 +15,8 @@ class Gutenberg_REST_Post_Types_Controller_6_8 extends WP_REST_Post_Types_Contro
 	/**
 	 * Add Block Editor default rendering mode setting to the response.
 	 *
-	 * @param WP_Post_Type      $item    Post type object.
-	 * @param WP_REST_Request   $request Request object.
+	 * @param  WP_Post_Type    $item    Post type object.
+	 * @param  WP_REST_Request $request Request object.
 	 * @return WP_REST_Response Response object.
 	 */
 	public function prepare_item_for_response( $item, $request ) {
