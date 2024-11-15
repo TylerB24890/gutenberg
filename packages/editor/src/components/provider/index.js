@@ -72,8 +72,7 @@ const NON_CONTEXTUAL_POST_TYPES = [
  * @return {Array} Block editor props.
  */
 function useBlockEditorProps( post, template, mode ) {
-	const rootLevelPost =
-		mode === 'post-only' || ! template ? 'post' : 'template';
+	const rootLevelPost = mode === 'template-locked' ? 'template' : 'post';
 	const [ postBlocks, onInput, onChange ] = useEntityBlockEditor(
 		'postType',
 		post.type,
