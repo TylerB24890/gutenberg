@@ -133,6 +133,18 @@ export class PerfUtils {
 			() => window?.wp?.blocks && window?.wp?.data
 		);
 
+		const initialRenderingMode = await this.page.evaluate( () => {
+			const { select } = window.wp.data;
+			return select( 'core/editor' ).getRenderingMode();
+		} );
+
+		if ( initialRenderingMode !== 'post-only' ) {
+			await this.page.evaluate( () => {
+				const { dispatch } = window.wp.data;
+				dispatch( 'core/editor' ).setRenderingMode( 'post-only' );
+			} );
+		}
+
 		return await this.page.evaluate( ( html: string ) => {
 			const { parse } = window.wp.blocks;
 			const { dispatch } = window.wp.data;
