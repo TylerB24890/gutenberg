@@ -98,26 +98,23 @@ export class PerfUtils {
 	}
 
 	/**
-	 * Enters the post-only rendering mode.
+	 * Change the rendering mode of the editor.
 	 *
-	 * This is sometimes needed when for example we want to update the contents
-	 * of the editor from a HTML file. Calling the resetBlocks method of the
-	 * core/block-editor store will replace the contents of the template if the
-	 * rendering mode is not post-only. So this should always be called before
-	 * the resetBlocks method is used.
+	 * Setting the rendering mode to something other than the default is sometimes
+	 * needed when for example we want to update the contents of the editor from a
+	 * HTML file. Calling the resetBlocks method of the core/block-editor store will
+	 * replace the contents of the template if the rendering mode is not post-only.
+	 * So this should always be called before the resetBlocks method is used.
+	 *
+	 * @param newRenderingMode Rendering mode to set
+	 *
+	 * @return Promise<void>
 	 */
-	async enterPostOnlyRenderingMode() {
-		const initialRenderingMode = await this.page.evaluate( () => {
-			const { select } = window.wp.data;
-			return select( 'core/editor' ).getRenderingMode();
-		} );
-
-		if ( initialRenderingMode !== 'post-only' ) {
-			await this.page.evaluate( () => {
-				const { dispatch } = window.wp.data;
-				dispatch( 'core/editor' ).setRenderingMode( 'post-only' );
-			} );
-		}
+	async setRenderingMode( newRenderingMode: string ) {
+		await this.page.evaluate( ( _newRenderingMode ) => {
+			const { dispatch } = window.wp.data;
+			dispatch( 'core/editor' ).setRenderingMode( _newRenderingMode );
+		}, newRenderingMode );
 	}
 
 	/**

@@ -55,7 +55,6 @@ test.describe( 'Post Editor Performance', () => {
 
 		test( 'Setup the test post', async ( { admin, perfUtils } ) => {
 			await admin.createNewPost();
-			await perfUtils.enterPostOnlyRenderingMode();
 			await perfUtils.loadBlocksForLargePost();
 			draftId = await perfUtils.saveDraft();
 		} );
@@ -143,7 +142,6 @@ test.describe( 'Post Editor Performance', () => {
 
 		test( 'Setup the test post', async ( { admin, perfUtils, editor } ) => {
 			await admin.createNewPost();
-			await perfUtils.enterPostOnlyRenderingMode();
 			await perfUtils.loadBlocksForLargePost();
 			await editor.insertBlock( { name: 'core/paragraph' } );
 			draftId = await perfUtils.saveDraft();
@@ -167,7 +165,6 @@ test.describe( 'Post Editor Performance', () => {
 
 		test( 'Setup the test post', async ( { admin, perfUtils, editor } ) => {
 			await admin.createNewPost();
-			await perfUtils.enterPostOnlyRenderingMode();
 			await perfUtils.loadBlocksForLargePost();
 			await editor.insertBlock( { name: 'core/paragraph' } );
 			draftId = await perfUtils.saveDraft();
@@ -204,7 +201,6 @@ test.describe( 'Post Editor Performance', () => {
 
 		test( 'Setup the test post', async ( { admin, perfUtils, editor } ) => {
 			await admin.createNewPost();
-			await perfUtils.enterPostOnlyRenderingMode();
 			await perfUtils.loadBlocksForLargePost();
 			await editor.insertBlock( { name: 'core/paragraph' } );
 			draftId = await perfUtils.saveDraft();
@@ -238,7 +234,6 @@ test.describe( 'Post Editor Performance', () => {
 
 		test( 'Set up the test post', async ( { admin, perfUtils } ) => {
 			await admin.createNewPost();
-			await perfUtils.enterPostOnlyRenderingMode();
 			await perfUtils.loadBlocksForSmallPostWithContainers();
 			draftId = await perfUtils.saveDraft();
 		} );
