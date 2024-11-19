@@ -98,6 +98,29 @@ export class PerfUtils {
 	}
 
 	/**
+	 * Enters the post-only rendering mode.
+	 *
+	 * This is sometimes needed when for example we want to update the contents
+	 * of the editor from a HTML file. Calling the resetBlocks method of the
+	 * core/block-editor store will replace the contents of the template if the
+	 * rendering mode is not post-only. So this should always be called before
+	 * the resetBlocks method is used.
+	 */
+	async enterPostOnlyRenderingMode() {
+		const initialRenderingMode = await this.page.evaluate( () => {
+			const { select } = window.wp.data;
+			return select( 'core/editor' ).getRenderingMode();
+		} );
+
+		if ( initialRenderingMode !== 'post-only' ) {
+			await this.page.evaluate( () => {
+				const { dispatch } = window.wp.data;
+				dispatch( 'core/editor' ).setRenderingMode( 'post-only' );
+			} );
+		}
+	}
+
+	/**
 	 * Loads blocks from the small post with containers fixture into the editor
 	 * canvas.
 	 */
@@ -132,18 +155,6 @@ export class PerfUtils {
 		await this.page.waitForFunction(
 			() => window?.wp?.blocks && window?.wp?.data
 		);
-
-		const initialRenderingMode = await this.page.evaluate( () => {
-			const { select } = window.wp.data;
-			return select( 'core/editor' ).getRenderingMode();
-		} );
-
-		if ( initialRenderingMode !== 'post-only' ) {
-			await this.page.evaluate( () => {
-				const { dispatch } = window.wp.data;
-				dispatch( 'core/editor' ).setRenderingMode( 'post-only' );
-			} );
-		}
 
 		return await this.page.evaluate( ( html: string ) => {
 			const { parse } = window.wp.blocks;
